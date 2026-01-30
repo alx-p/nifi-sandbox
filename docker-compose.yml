@@ -1,7 +1,6 @@
-version: '3'
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:13.22-bookworm
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
