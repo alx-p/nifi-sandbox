@@ -1,14 +1,43 @@
 services:
-  postgres:
-    image: postgres:13.22-bookworm
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydatabase
-    ports:
-      - "5432:5432"
 
   nifi:
-    image: apache/nifi:latest
+    image: apache/nifi:2.7.2
+    container_name: nifi-sandbox-server
+    environment:
+      # Уменьшаем память для JVM, так как контейнер ограничен
+      #- NIFI_JVM_MINMEM=2G
+      #- NIFI_JVM_MAXMEM=2G
+      #- NIFI_LOG_LEVEL=INFO  
+      - NIFI_WEB_HTTP_PORT=8080  
+    volumes:
+      - ./nifi_data:/opt/nifi-nar-bundles
+      - ./nifi-flows:/opt/nifi-flows
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
+      #postgres:
+       # condition: service_healthy # Опционально: ждать, пока Postgres станет здоровым
+        # Либо просто: condition: service_started
+
+  postgres:
+    image: postgres:13.22-bookworm
+    container_name: nifi-sandbox-pg
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-default_password} # Можно задать в .env файле или использовать значение по умолчанию
+      POSTGRES_DB: nifi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    # (Опционально) Если хотите добавить проверки здоровья
+ #   healthcheck:
+  #    test: ["CMD-SHELL", "pg_isready -U admin"]
+   #   interval: 5s
+    #  timeout: 5s
+     # retries: 5
+
+volumes:
+  nifi_data:
+  pg_data:        
